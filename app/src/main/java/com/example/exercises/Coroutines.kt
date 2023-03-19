@@ -2,6 +2,7 @@ package com.example.exercises
 
 import kotlinx.coroutines.*
 import java.lang.System.currentTimeMillis
+import kotlin.system.measureTimeMillis
 
 class Coroutines {
     companion object Functions {
@@ -256,6 +257,83 @@ class Coroutines {
             }
             // Outside of runBlocking all coroutines have completed
             println(acquired2) // Print the number of resources still acquired
+        }
+
+        fun main17() = runBlocking<Unit> {
+            val time = measureTimeMillis {
+                val one = async { doSomethingUsefulOne() }
+                val two = async { doSomethingUsefulTwo() }
+                println("The answer is ${one.await() + two.await()}")
+            }
+            println("Completed in $time ms")
+        }
+
+        private suspend fun doSomethingUsefulOne(): Int {
+            delay(1000L) // pretend we are doing something useful here
+            return 13
+        }
+
+        private suspend fun doSomethingUsefulTwo(): Int {
+            delay(1000L) // pretend we are doing something useful here, too
+            return 29
+        }
+
+        fun main18() = runBlocking<Unit> {
+            val time = measureTimeMillis {
+                val one = async(start = CoroutineStart.LAZY) { doSomethingUsefulOne() }
+                val two = async(start = CoroutineStart.LAZY) { doSomethingUsefulTwo() }
+                // some computation
+                one.start() // start the first one
+                two.start() // start the second one
+                println("The answer is ${one.await() + two.await()}")
+            }
+            println("Completed in $time ms")
+        }
+
+        fun main19() = runBlocking<Unit> {
+            val time = measureTimeMillis {
+                println("The answer is ${concurrentSum()}")
+            }
+            println("Completed in $time ms")
+        }
+
+        private suspend fun concurrentSum(): Int = coroutineScope {
+            val one = async { doSomethingUsefulOne() }
+            val two = async { doSomethingUsefulTwo() }
+            one.await() + two.await()
+        }
+
+        @OptIn(DelicateCoroutinesApi::class)
+        fun main20() = runBlocking<Unit> {
+            launch { // context of the parent, main runBlocking coroutine
+                println("main runBlocking      : I'm working in thread ${Thread.currentThread().name}")
+            }
+            launch(Dispatchers.Unconfined) { // not confined -- will work with main thread
+                println("Unconfined            : I'm working in thread ${Thread.currentThread().name}")
+            }
+            launch(Dispatchers.Default) { // will get dispatched to DefaultDispatcher
+                println("Default               : I'm working in thread ${Thread.currentThread().name}")
+            }
+            launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
+                println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
+            }
+        }
+
+        private fun log(msg: String) = println("[${Thread.currentThread().name}] $msg")
+
+        @OptIn(DelicateCoroutinesApi::class)
+        fun main21() {
+            newSingleThreadContext("Ctx1").use { ctx1 ->
+                newSingleThreadContext("Ctx2").use { ctx2 ->
+                    runBlocking(ctx1) {
+                        log("Started in ctx1")
+                        withContext(ctx2) {
+                            log("Working in ctx2")
+                        }
+                        log("Back to ctx1")
+                    }
+                }
+            }
         }
     }
 }
