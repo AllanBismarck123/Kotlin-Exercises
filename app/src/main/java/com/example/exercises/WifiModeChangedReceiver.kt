@@ -17,12 +17,12 @@ class WifiModeChangedReceiver: BroadcastReceiver() {
            WifiManager.WIFI_STATE_ENABLED -> Toast.makeText(
                context,
                "Wifi Mode Enabled",
-               Toast.LENGTH_LONG
+               Toast.LENGTH_SHORT
            ).show()
            WifiManager.WIFI_STATE_DISABLED -> Toast.makeText(
                context,
                "Wifi Mode Disabled",
-               Toast.LENGTH_LONG
+               Toast.LENGTH_SHORT
            ).show()
        }
    }

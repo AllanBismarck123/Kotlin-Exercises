@@ -1,18 +1,28 @@
 package com.example.exercises
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Button
+import android.widget.Toast
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var btnTest: Button
+
     private lateinit var airPlaneReceiver: AirplaneModeChangedReceiver
     private lateinit var wifiReceiver: WifiModeChangedReceiver
+    private lateinit var networkCheck: NetworkChecker
 
+    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        btnTest = findViewById(R.id.btnTest)
 
         //Coroutines.main()
         //Coroutines.main2()
@@ -38,6 +48,10 @@ class MainActivity : AppCompatActivity() {
 
         initAirPlaneReceiver()
         initWifiReceiver()
+
+        btnTest.setOnClickListener {
+            initNetworkCheck()
+        }
     }
 
     override fun onStart() {
@@ -45,8 +59,8 @@ class MainActivity : AppCompatActivity() {
         initWifiReceiver()
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onDestroy() {
+        super.onDestroy()
         unregisterReceiver(airPlaneReceiver)
         unregisterReceiver(wifiReceiver)
     }
@@ -64,6 +78,16 @@ class MainActivity : AppCompatActivity() {
 
         IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION).also {
             registerReceiver(wifiReceiver, it)
+        }
+    }
+
+    private fun initNetworkCheck() {
+        networkCheck = NetworkChecker(getSystemService(ConnectivityManager::class.java))
+
+        if(networkCheck.hasInternet()) {
+            Toast.makeText(this, "Internet is Connected", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Internet is not Connected", Toast.LENGTH_SHORT).show()
         }
     }
 
